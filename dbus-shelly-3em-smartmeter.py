@@ -81,7 +81,7 @@ class DbusShelly3emService:
     gobject.timeout_add(self._getSignOfLifeInterval()*60*1000, self._signOfLife)
  
   def _getShellySerial(self):
-    meter_data = self._getShellyData()  
+    meter_data = self._getShellyConfigData()  
     
     if not meter_data['device']['mac']:
         raise ValueError("Response does not contain 'mac' attribute")
