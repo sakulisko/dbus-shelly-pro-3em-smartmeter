@@ -83,11 +83,13 @@ class DbusShelly3emService:
   def _getShellySerial(self):
     meter_data = self._getShellyData()  
     
-    if not meter_data['mac']:
+    if not meter_data['device']['mac']:
         raise ValueError("Response does not contain 'mac' attribute")
     
-    serial = meter_data['mac']
+    serial = meter_data['device']['mac']
     return serial
+  
+
  
  
   def _getConfig(self):
@@ -104,6 +106,18 @@ class DbusShelly3emService:
         value = 0
     
     return int(value)
+  
+  def _getShellyConfigUrl(self):
+    config = self._getConfig()
+    accessType = config['DEFAULT']['AccessType']
+    
+    if accessType == 'OnPremise': 
+        URL = "http://%s:%s@%s/rpc/Sys.GetConfig" % (config['ONPREMISE']['Username'], config['ONPREMISE']['Password'], config['ONPREMISE']['Host'])
+        URL = URL.replace(":@", "")
+    else:
+        raise ValueError("AccessType %s is not supported" % (config['DEFAULT']['AccessType']))
+    
+    return URL
   
   
   def _getShellyStatusUrl(self):
@@ -130,6 +144,23 @@ class DbusShelly3emService:
         raise ValueError("AccessType %s is not supported" % (config['DEFAULT']['AccessType']))
     
     return URL
+  
+  def _getShellyConfigData(self):
+    URL = self._getShellyConfigUrl()
+    meter_r = requests.get(url = URL, timeout=5)
+    
+    # check for response
+    if not meter_r:
+        raise ConnectionError("No response from Shelly 3EM - %s" % (URL))
+    
+    meter_data = meter_r.json()     
+    
+    # check for Json
+    if not meter_data:
+        raise ValueError("Converting response to JSON failed")
+    
+    
+    return meter_data
  
   def _getShellyData(self):
     URL = self._getShellyStatusUrl()
